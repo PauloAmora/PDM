@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">LoginApp</string>
     <string name="title_activity_details">Details</string>
+    <string name="title_activity_add_item">AddItemActivity</string>
 </resources>
