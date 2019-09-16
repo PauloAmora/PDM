@@ -6,7 +6,10 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.provider.BaseColumns;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -18,25 +21,36 @@ import android.widget.Toast;
 import java.util.ArrayList;
 import java.util.List;
 
+import db.ContactContract;
+import db.ContactDBHelper;
+
 public class MainActivity extends AppCompatActivity {
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        SharedPreferences sp = getSharedPreferences("Agenda", Context.MODE_PRIVATE);
-        int count = sp.getInt("contactSize", 0);
+        ContactDBHelper dbHelper = new ContactDBHelper(getApplicationContext());
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+        String[] colunas = {BaseColumns._ID, ContactContract.ContactEntry.COLUMN_NAME_NOME};
+        Cursor cursor = db.query(ContactContract.ContactEntry.TABLE_NAME,colunas,null, null,null, null, null,null);
         ArrayList<Contato> contatos = new ArrayList<Contato>();
-        for (int i = 0; i<count; i++){
+        while(cursor.moveToNext()) {
+            Integer id = cursor.getInt(cursor.getColumnIndexOrThrow(BaseColumns._ID));
+            String itemId = cursor.getString(
+                    cursor.getColumnIndexOrThrow(ContactContract.ContactEntry.COLUMN_NAME_NOME));
             Contato c = new Contato();
-            c.nome = sp.getString("nome"+i, "");
-            c.email = sp.getString("email"+i, "");
-            c.telefone = sp.getString("telefone"+i, "");
+            c.nome = itemId;
+            c.id = id;
             contatos.add(c);
         }
+        cursor.close();
+
         ListView lv = (ListView) findViewById(R.id.listview);
 
         ArrayAdapter<Contato> adapter = new ContactAdapter(this, contatos);
+
         lv.setAdapter(adapter);
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
@@ -44,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
 
                 Intent intent = new Intent(MainActivity.this,ShowItemActivity.class);
                 //based on item add info to intent
-                Intent id = intent.putExtra("id", i);
+                Intent id = intent.putExtra("id", ((Contato)item).id);
                 startActivity(intent);
             }
         });
